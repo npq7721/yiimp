@@ -298,9 +298,11 @@ void coinbase_create(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ, json_value *
 		char payees[4]; // addresses count
 		int npayees = (templ->has_segwit_txs) ? 2 : 1;
 		bool masternode_enabled = json_get_bool(json_result, "masternode_payments_enforced");
+		bool founder_enabled = json_get_bool(json_result, "founder_payments_enforced");
 		bool superblocks_enabled = json_get_bool(json_result, "superblocks_enabled");
 		json_value* superblock = json_get_array(json_result, "superblock");
 		json_value* masternode = json_get_object(json_result, "masternode");
+		json_value* founder = json_get_object(json_result, "founder");
 		if(!masternode && json_get_bool(json_result, "masternode_payments")) {
 			coind->oldmasternodes = true;
 			debuglog("%s is using old masternodes rpc keys\n", coind->symbol);
@@ -347,6 +349,21 @@ void coinbase_create(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ, json_value *
 				base58_decode(payee, script_payee);
 				bool masternode_use_p2sh = (strcmp(coind->symbol, "MAC") == 0);
 				if(masternode_use_p2sh)
+					p2sh_pack_tx(coind, script_dests, amount, script_payee);
+				else
+					job_pack_tx(coind, script_dests, amount, script_payee);
+			}
+		}
+		if (founder_enabled && founder) {
+			bool started = json_get_bool(json_result, "founder_payments_started");
+			const char *payee = json_get_string(founder, "payee");
+			json_int_t amount = json_get_int(founder, "amount");
+			if (payee && amount && started) {
+				npayees++;
+				available -= amount;
+				base58_decode(payee, script_payee);
+				bool founder_use_p2sh = (strcmp(coind->symbol, "MAC") == 0);
+				if(founder_use_p2sh)
 					p2sh_pack_tx(coind, script_dests, amount, script_payee);
 				else
 					job_pack_tx(coind, script_dests, amount, script_payee);

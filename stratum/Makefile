@@ -40,7 +40,7 @@ projectcode1:
 projectcode2:
 	$(MAKE) -C $(CODEDIR2)
 
-$(SOURCES): stratum.h util.h
+$(SOURCES): stratum.h util.h uint256.h
 
 $(OUTPUT): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -o $@
